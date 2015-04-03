@@ -1,8 +1,8 @@
 # argparser
-Command line argument parser library, trying to follow POSIX and GNU guidelines.
+Command line argument parser library trying to follow POSIX and GNU guidelines.
 
 ## Installation
-`gem install argparser`, as usual.
+`gem install argparser` as usual.
 
 ## Usage by example
 Suppose there's a file named `example.rb` like this:
@@ -40,6 +40,8 @@ args= ArgParser.new( # Here goes the manifest.
 puts args['mode'].value.inspect # So we could use our options...
 puts args['file'].value         # Prints contents of a file
 ````
+
+This file located here: `lib/argparser/examples/example.rb`.
 
 Now, let's look at the output of example given in various cases.
 
@@ -82,12 +84,12 @@ Unknown option: a
 ````
 
 ## Consider more rules
-* `--help` and `--version` options provided for free unless specified.
-* printed synopsys provided for free unless specified
+* `--help` and `--version` options provided for free unless specified
+* printed synopsis provided for free unless specified
 * `:default` used if option has :argument and no value given, lowest priority
 * `:env  => 'ENV_VAR'` to pick default value from ENV, high priority
 * `:eval => 'ruby expr'` to pick default from eval(...), useful for read defaults from config files, so it has low priority
-* `--`-argument honored
+* `--` argument honored
 
 ## Documentation
 This README is all i could say in a rush. No other documentation provided at this moment, see the sources.
