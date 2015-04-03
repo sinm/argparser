@@ -16,28 +16,29 @@ args= ArgParser.new( # Here goes the manifest.
     :argument   => 'first|second|third',
     :default    => 'first',
     :multiple   => true,
-    :help       => 'Example mode.'
+    :help       => 'Example mode.',
     :validate   => (lambda {|this, parser|  # Validating value in-line
-      this.argument.split('|').include?(this.value)
-      # You may exit right here with parser.terminate(2, 'Error message')
-    })
+      possible = this.argument.split('|')
+      this.value.select{|v| possible.include?(v)}.size == this.value.size })
   }, {
     :names      => 'file',
     :input      => true,
     :required   => true,
     :help       => 'Filename or - for stdin.',
     :validate   => (lambda {|this, parser|
-      this.value == '-' ? $stdin.read : begin
+      if this.value == '-'
+        this.value = $stdin.read
+      else
         parser.terminate(2, 'No such file') unless File.exists?(this.value)
-        File.read(this.value)
+        this.value = File.read(this.value)
       end
-    })
+      true })
   }]
 ).parse!  # Uses ARGV by default, you may supply your own arguments.
           # It exits if bad arguments given or they aren't validated.
 
-puts args['mode'].value.inspect
-puts args['file'].value # So we could use our options...
+puts args['mode'].value.inspect # So we could use our options...
+puts args['file'].value         # Prints contents of a file
 ````
 
 Now, let's look at the output of example given in various cases.
@@ -98,4 +99,4 @@ Don't hesistate to leave a report.
 MIT for now.
 
 ## TODO
-* Go steal milk for the hazards done.
+* Go steal milk for the hazards applied.
