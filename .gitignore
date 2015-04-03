@@ -17,3 +17,4 @@ thumbs.db
 .ruby-version
 Gemfile.lock
 core
+*.gem

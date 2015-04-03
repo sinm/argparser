@@ -1,4 +1,3 @@
-
 #__END__
 module Tulz
   def hash2vars!(hash)
@@ -42,9 +41,13 @@ class ArgParser
   OUT_ARGUMENT_EXPECTED = 'Expected argument: %s'
   OUT_UNIQUE_NAME = 'Option name should be unique: %s'
   INVALID_OPTION = 'Invalid option: %s'
+  OPT_ENOUGH  = '--'
+
+  # These options don't display their synopsis and given for free unless
+  # explicitly specified in the manifest.
   OPT_HELP    = 'help'
   OPT_VERSION = 'version'
-  OPT_ENOUGH  = '--'
+  OPTS_RESERVED = [OPT_HELP, OPT_VERSION]
 
   class Option
     include Tulz
@@ -200,7 +203,7 @@ class ArgParser
       end
     end
 
-    [OPT_VERSION, OPT_HELP].each { |o|
+    OPTS_RESERVED.each { |o|
       next unless arguments.include?("--#{o}")
       o = self[o]
       o.set_value(nil)
@@ -229,7 +232,7 @@ class ArgParser
             option.set_value(nil)
           end
         else
-          terminate(2, OUT_UNKNOWN_OPTION % a)
+          terminate(2, OUT_UNKNOWN_OPTION % $1)
         end
       elsif a =~ /^-([^-].*)/ # short option, may combine and has an arg at end
         (opts = $1).chars.to_a.each_with_index do |char, index|
@@ -249,7 +252,7 @@ class ArgParser
               option.set_value(nil)
             end
           else
-            terminate(2, OUT_UNKNOWN_OPTION % a)
+            terminate(2, OUT_UNKNOWN_OPTION % char)
           end
         end
       else
@@ -334,33 +337,18 @@ class ArgParser
 
   def printed_synopsis
     s = synopsis ||
-      (options.select{|o| !o.input} + inputs).map{|o| o.synopsis}.join(' ')
+      (options.select{|o| !o.input} + inputs).map{|o|
+        OPTS_RESERVED.include?(o.name) ? nil : o.synopsis}.compact.join(' ')
     "#{program} #{s}"
   end
 
-  if __FILE__ == $0 # Some selftests
+  if __FILE__ == $0 # Some selftests... while hakin in an editor
     $stdout.sync = true
     $stderr.sync = true
-    args = ArgParser.new(
-      :version    => '00',
-      :program    => 'exec',
-      :info       => 'executes command over a group of servers',
-      :options    => [{
-        :names    => 'group',
-        :input    => true,
-        :required => true,
-        :help     => 'Name of a group'
-      },{
-        :names    => 'command',
-        :input    => true,
-        :required => true,
-        :multiple => true,
-        :help     => 'command to execute'
-      }]
-    ).parse!(%w[--help])
-
-    puts args.options.map(&:to_s).join("\n")
-    puts 'OK!'
+    ARGV = %w[--abcm first]
+    example = File.read('argparser/examples/example.rb')
+    example = example.split("\n")[1..-1].join("\n") # Cut 'require' string
+    eval(example) # Last line
   end
 
-end # class
+end # the very end
