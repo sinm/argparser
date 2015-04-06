@@ -346,10 +346,8 @@ class ArgParser
   if __FILE__ == $0 # Some selftests... while hakin in an editor
     $stdout.sync = true
     $stderr.sync = true
-    ARGV = %w[--abcm first]
-    example = File.read('argparser/examples/example.rb')
-    example = example.split("\n")[1..-1].join("\n") # Cut 'require' string
-    eval(example) # Last line
+    ARGV = %w[-m first --mode second -]
+    require File.expand_path('../argparser/examples/example.rb', __FILE__)
   end
 
 end # the very end

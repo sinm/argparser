@@ -1,6 +1,8 @@
 # argparser
 Command line argument parser library trying to follow POSIX and GNU guidelines.
 
+[![Build Status](https://travis-ci.org/sinm/argparser.svg?branch=master)](https://travis-ci.org/sinm/argparser)
+
 ## Installation
 `gem install argparser` as usual.
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-require 'argparser'
+require 'argparser' unless defined?(ArgParser)
 args= ArgParser.new( # Here goes the manifest.
   :program => 'example.rb', # Use additional properties like these:
   :version => '1.0',        #   :info, :copyright, :license,
