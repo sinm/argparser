@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'argparser'
 args= ArgParser.new( # Here goes the manifest.
   :program => 'example.rb', # Use additional properties like these:

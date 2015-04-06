@@ -1,4 +1,5 @@
-#__END__
+# coding: utf-8
+
 module Tulz
   def hash2vars!(hash)
     hash.each do |k, v|
