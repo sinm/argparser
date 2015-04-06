@@ -8,7 +8,7 @@ rvm:
   - "jruby-18mode"
   - "jruby-19mode"
 script:
-  ruby ./lib/argparser.rb
+  cat 'content' | ruby ./lib/argparser.rb
 branches:
   except:
     - "trash"
