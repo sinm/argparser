@@ -8,7 +8,6 @@ rvm:
   - "jruby-18mode"
   - "jruby-19mode"
 script:
-  cat 'content' | ruby ./lib/argparser.rb
+  rake test
 branches:
-  except:
-    - "trash"
+  - "master"

@@ -1,7 +1,7 @@
 # argparser
 Command line argument parser library trying to follow POSIX and GNU guidelines.
 
-[![Build Status](https://travis-ci.org/sinm/argparser.svg?branch=master)](https://travis-ci.org/sinm/argparser)
+[![Build Status](https://travis-ci.org/sinm/argparser.svg?branch=master)](https://travis-ci.org/sinm/argparser) [![Gem Version](https://badge.fury.io/rb/argparser.svg)](http://badge.fury.io/rb/argparser) [![Dependency Status](https://gemnasium.com/sinm/argparser.svg)](https://gemnasium.com/sinm/argparser) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/sinm/argparser/master/LICENSE.txt) [![Code Climate](https://codeclimate.com/github/sinm/argparser/badges/gpa.svg)](https://codeclimate.com/github/sinm/argparser) [![Test Coverage](https://codeclimate.com/github/sinm/argparser/badges/coverage.svg)](https://codeclimate.com/github/sinm/argparser) [![Inline docs](http://inch-ci.org/github/sinm/argparser.svg?branch=master)](http://inch-ci.org/github/sinm/argparser)
 
 ## Installation
 `gem install argparser` as usual.
@@ -101,6 +101,3 @@ Don't hesistate to leave a report.
 
 ## License
 MIT for now.
-
-## TODO
-* Go steal milk for the hazards applied.

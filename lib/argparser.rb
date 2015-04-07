@@ -23,7 +23,7 @@ end
 
 class ArgParser
   include Tulz
-  OUT_VERSION = '%s %s %s'
+  OUT_VERSION = '%s%s %s'
   OUT_COPYRIGHT = 'Copyright (C) %s'
   OUT_LICENSE = 'License: %s'
   OUT_HOMEPAGE = '%s home page: %s'
@@ -41,7 +41,7 @@ class ArgParser
   OUT_OPTION_EXPECTED = 'Expected option: %s'
   OUT_ARGUMENT_EXPECTED = 'Expected argument: %s'
   OUT_UNIQUE_NAME = 'Option name should be unique: %s'
-  INVALID_OPTION = 'Invalid option: %s'
+  INVALID_OPTION = 'Invalid value for option: %s'
   OPT_ENOUGH  = '--'
 
   # These options don't display their synopsis and given for free unless
@@ -226,7 +226,7 @@ class ArgParser
         if $1.size > 1 && option = self[$1]
           if option.argument
             if args.empty?
-              terminate(2, $stderr.puts(OUT_OPTION_ARGUMENT_EXPECTED % a))
+              terminate(2, OUT_OPTION_ARGUMENT_EXPECTED % a)
             end
             option.set_value(args.shift)
           else
@@ -286,22 +286,27 @@ class ArgParser
     self
   end
 
-  def terminate(code, str = nil)
+  def terminate(code, str)
+    s = ''
+    s << printed_synopsis << "\n" if code != 0
+    s << str
+    s << "\n" unless str[-1] == "\n"
     stream = code == 0 ? $stdout : $stderr
-    stream.puts(printed_synopsis) if code != 0
-    if str
-      stream.print(str)
-      stream.puts() unless str[-1] == "\n"
-    end
-    exit!(code)
+    stream.print(s)
+    on_exit(code, s)
+  end
+
+  def on_exit(code, message)
+    exit(code)
   end
 
   def printed_version
-    pk = (pk = @package) ? "(#{pk})" : ''
+    pk = (pk = @package) ? " (#{pk})" : ''
     str = ''
     str << (OUT_VERSION    % [@program, pk, @version]) + "\n"
-    str << (OUT_COPYRIGHT  % @copyright) + "\n"
-    str << (OUT_LICENSE    % @license) + "\n"
+    str << (OUT_COPYRIGHT  % @copyright) + "\n" if @copyright
+    str << (OUT_LICENSE    % @license) + "\n" if @license
+    str
   end
 
   def printed_help
@@ -346,7 +351,7 @@ class ArgParser
   if __FILE__ == $0 # Some selftests... while hakin in an editor
     $stdout.sync = true
     $stderr.sync = true
-    ARGV = %w[-m first --mode second -]
+    ARGV = %w[--version]
     require File.expand_path('../argparser/examples/example.rb', __FILE__)
   end
 

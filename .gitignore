@@ -18,3 +18,4 @@ thumbs.db
 Gemfile.lock
 core
 *.gem
+/doc/
