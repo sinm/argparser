@@ -11,3 +11,5 @@ script:
   rake test
 branches:
   - "master"
+install:
+  gem install minitest -v '~> 4'
