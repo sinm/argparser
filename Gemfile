@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
+gemspec
 
-group :test do
-  gem 'minitest', '~> 4'
-end
+#group :test do
+#  gem 'minitest', '~> 4'
+#  gem 'rake', '~> 10'
+#end
