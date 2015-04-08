@@ -8,6 +8,6 @@ rvm:
   - "jruby-18mode"
   - "jruby-19mode"
 script:
-  bundle exec rake test
+  CODECLIMATE_REPO_TOKEN=3a1b48c656a57cdd02824699a1352f8a0648e9b41f3df18323b8c48bab22b5ce bundle exec rake test
 branches:
   - "master"

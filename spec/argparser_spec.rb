@@ -1,4 +1,6 @@
 # coding: utf-8
+require "codeclimate-test-reporter"
+CodeClimate::TestReporter.start
 
 require "minitest/autorun"
 require File.expand_path('../../lib/argparser.rb', __FILE__)  unless defined?(ArgParser)
