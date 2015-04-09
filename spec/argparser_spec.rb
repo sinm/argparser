@@ -18,15 +18,7 @@ a_manifest = {
     :input      => true,
     :required   => false,
     :default    => '-',
-    :help       => 'Filename or - for stdin.',
-    :validate   => (lambda {|this, parser|
-      if this.value == '-'
-        this.value = '$stdin.read'
-      else
-        #parser.terminate(2, 'No such file') unless File.exists?(this.value)
-        this.value = "File.read(#{this.value})"
-      end
-      true })
+    :help       => 'Filename or - for stdin.'
   }]
 }
 
@@ -134,14 +126,14 @@ end
 
 describe 'required option' do
   before do
-    b_manifest = a_manifest.merge({
+    @b_manifest = a_manifest.merge({
       :options => (a_manifest[:options] + [{
           :names => %w[r required legacy-required],
           :required => true,
           :multiple => true
         }])
     })
-    @args = ArgParser.new(b_manifest)
+    @args = ArgParser.new(@b_manifest)
   end
 
   it 'is really not optional' do
@@ -160,20 +152,28 @@ describe 'required option' do
   end
 end
 
-describe 'input argument name used as an option' do
+describe 'input argument' do
   before do
-    b_manifest = a_manifest.merge({
-      :options => (a_manifest[:options] << {
+    @b_manifest = a_manifest.merge({
+      :options => (a_manifest[:options] + [{
           :names => %w[file2],
           :input => true
-        })
+        }])
     })
-    @args = ArgParser.new(b_manifest)
+    @args = ArgParser.new(@b_manifest)
   end
 
-  it 'should terminate if so' do
+  it 'terminates if name used as an option' do
     lambda { @args.parse!(%w[--file2 --]) }.must_raise(ExitStub)
   end
+
+  it 'survives second optional argument' do
+    @args.parse!(%w[file2])
+    @args['file'].value.must_equal('file2')
+    @args['file2'].value.must_equal(@args['file2'].default)
+  end
+end
+
 describe 'optional tiny features' do
   before do
     @b_manifest = a_manifest.merge({
@@ -185,6 +185,13 @@ describe 'optional tiny features' do
     })
     @args = ArgParser.new(@b_manifest)
   end
+
+  it 'ignores whitespace in option names' do
+    "\n aaaaa \t ".strip.must_equal('aaaaa')
+    @args.parse!(%w[--aaaaa foobar])
+    @args['aaaaa'].value.must_equal(['foobar'])
+  end
+
   it 'allows to get value as string' do
     @args.parse!(%w[--aaaaa foo])
     "#{@args['aaaaa']}".must_equal('foo')
