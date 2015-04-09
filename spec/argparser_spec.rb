@@ -1,23 +1,5 @@
 # coding: utf-8
-require "codeclimate-test-reporter"
-CodeClimate::TestReporter.start
-
-require "minitest/autorun"
-require File.expand_path('../../lib/argparser.rb', __FILE__)  unless defined?(ArgParser)
-
-class ExitStub < RuntimeError
-  attr_accessor :status
-  def initialize(status, message)
-    @status = status
-    super(message)
-  end
-end
-
-class ArgParser
-  def on_exit(status, message)
-    raise ExitStub.new(status, message)
-  end
-end
+require File.expand_path('../spec_helper.rb', __FILE__)
 
 a_manifest = {
   :program => 'a_example',  # Use additional properties like these:
@@ -162,7 +144,7 @@ describe 'required option' do
     @args = ArgParser.new(b_manifest)
   end
 
-  it 'is realy not optional' do
+  it 'is really not optional' do
     e = lambda { @args.parse!(%w[-- file]) }.must_raise(ExitStub)
     e.status.must_equal(2)
   end

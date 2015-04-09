@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   #                      '--main' << 'README'     <<
   #                      '--markup' << 'markdown' <<
   #                      '--line-numbers'
+  spec.add_development_dependency 'bundler',    '~> 1'
   spec.add_development_dependency 'rake',       '~> 10'
   spec.add_development_dependency 'minitest',   '~> 4'
 end

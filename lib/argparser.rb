@@ -1,28 +1,11 @@
 # coding: utf-8
-
-module Tulz
-  def hash2vars!(hash)
-    hash.each do |k, v|
-      next unless self.respond_to?(k)
-      instance_variable_set("@#{k}", v)
-    end
-  end
-
-  def to_hash
-    instance_variables.reduce({}) { |hash, var|
-      hash[var[1..-1]] = instance_variable_get(var)
-      hash }
-  end
-
-  def safe_return(str)
-    eval(str)
-  rescue Exception
-    # intentionally left blank
-  end
-end
+require 'argparser/tools'
+require 'argparser/option'
 
 class ArgParser
-  include Tulz
+  include Tools
+
+  # Output messages used in the #terminate method
   OUT_VERSION = '%s%s %s'
   OUT_COPYRIGHT = 'Copyright (C) %s'
   OUT_LICENSE = 'License: %s'
@@ -41,7 +24,7 @@ class ArgParser
   OUT_OPTION_EXPECTED = 'Expected option: %s'
   OUT_ARGUMENT_EXPECTED = 'Expected argument: %s'
   OUT_UNIQUE_NAME = 'Option name should be unique: %s'
-  INVALID_OPTION = 'Invalid value for option: %s'
+  OUT_INVALID_OPTION = 'Invalid value for option: %s'
   OPT_ENOUGH  = '--'
 
   # These options don't display their synopsis and given for free unless
@@ -49,76 +32,6 @@ class ArgParser
   OPT_HELP    = 'help'
   OPT_VERSION = 'version'
   OPTS_RESERVED = [OPT_HELP, OPT_VERSION]
-
-  class Option
-    include Tulz
-    attr_reader   :names    # Names of an option (short, long, etc.)
-    attr_reader   :argument # Name of an argument, if present
-    attr_reader   :help     # Help string for an option
-    attr_reader   :validate # Lambda(option, parser) to validate an option
-    attr_reader   :default  # Default value for an option
-    attr_reader   :input    # Option is an input argument
-    attr_reader   :required # Option required
-    attr_reader   :multiple # Option may occure multiple times
-    attr_reader   :count    # Option occucences
-    attr_reader   :env      # Default option set by this ENV VAR, if any
-    attr_reader   :eval     # Default option set by this eval,
-                            # superseded by :env, if any
-                            # So, in order: value - env - eval - default
-    attr_accessor :value    # Values of an option, Array if multiple
-
-    def name
-      names.first
-    end
-
-    def initialize(o_manifest)
-      hash2vars!(o_manifest)
-      @names = Array(names).map(&:to_s).sort{|n1, n2| n1.size <=> n2.size}
-      @value = [] if multiple
-      @count = 0
-    end
-
-    def set_value(v)
-      @count += 1
-      multiple ? (@value << v).flatten! : @value = v
-    end
-
-    def value?
-      multiple ? !value.compact.empty? : !!value
-    end
-
-    def to_s
-      str = ''
-      str += (count     ? count.to_s : ' ')
-      str += (argument  ? 'A' : ' ')
-      str += (validate  ? 'V' : ' ')
-      str += (default   ? 'D' : ' ')
-      str += (input     ? 'I' : ' ')
-      str += (required  ? 'R' : ' ')
-      str += (multiple  ? 'M' : ' ')
-      str += " #{names.inspect}"
-      str += " #{value.inspect}" if value
-    end
-
-    def synopsis
-      if input
-        s = name.dup
-        s << '...' if multiple
-        s = "[#{s}]" if !required
-        return s
-      else
-        s = names.map{|n| n.size == 1 ? "-#{n}" : "--#{n}"}.join(', ')
-        s << " #{argument}" if argument
-        s = "[#{s}]" if !required
-        s << '...' if multiple
-        return s
-      end
-    end
-
-    def validate!(parser)
-      !validate || validate.call(self, parser)
-    end
-  end
 
   attr_reader :program    # Program name, REQUIRED
   attr_reader :package    # Set to nil if there's no package
@@ -130,9 +43,10 @@ class ArgParser
   attr_reader :homepage   # Package or, if absent, program's home page
   attr_reader :synopsis   # Print this if present or construct from options
   attr_reader :help       # Print this if present or construct from options
-  attr_reader :options    # Options in a hash,
-                          # see ArgParser::Option class' attr_reader
+  attr_reader :options    # Array of options,
+                          # see ArgParser::Option class' attr_readers
 
+  # Returns option by any of its names given
   def [](name)
     options.find{|o| o.names.include?(name)}
   end
@@ -147,9 +61,7 @@ class ArgParser
       :options    => []
     }.merge(safe_return('$config.manifest') || {}).merge(manifest)
     hash2vars!(manifest)
-    @options = (manifest[:options] || manifest['options'] || {}).map do |o|
-      Option.new(o)
-    end
+    @options = manifest[:options].map { |o| Option.new(o) }
     if !self['help']
       options << Option.new(:names    => OPT_HELP,
                             :help     => 'Print this help and exit.',
@@ -166,7 +78,11 @@ class ArgParser
     end
   end
 
+  # Uses ARGV by default, but you may supply your own arguments
+  # It exits if bad arguments given or they aren't validated.
   def parse!(arguments = ARGV)
+    @options.each(&:reset!)
+
     {:program => @program, :version => @version}.each do |k, v|
       if !v || v.to_s.strip.empty?
         terminate(2, OUT_MANIFEST_EXPECTED % k)
@@ -191,7 +107,7 @@ class ArgParser
     names = {}
     options.each do |option|
       option.names.each do |name|
-        if name.strip.empty?
+        if name.empty?
           terminate(2, OUT_OPTION_NULL)
         end
         if names.has_key?(name)
@@ -235,7 +151,7 @@ class ArgParser
         else
           terminate(2, OUT_UNKNOWN_OPTION % $1)
         end
-      elsif a =~ /^-([^-].*)/ # short option, may combine and has an arg at end
+      elsif a =~ /^-([^-].*)/ # short option, combines, trailing argument
         (opts = $1).chars.to_a.each_with_index do |char, index|
           if (option = self[char])
             if option.argument
@@ -281,7 +197,7 @@ class ArgParser
 
     options.each { |o|
       next if o.validate!(self)
-      terminate(2, INVALID_OPTION % o.name)
+      terminate(2, OUT_INVALID_OPTION % o.name)
     }
     self
   end
@@ -347,12 +263,4 @@ class ArgParser
         OPTS_RESERVED.include?(o.name) ? nil : o.synopsis}.compact.join(' ')
     "#{program} #{s}"
   end
-
-  if __FILE__ == $0 # Some selftests... while hakin in an editor
-    $stdout.sync = true
-    $stderr.sync = true
-    ARGV = %w[--version]
-    require File.expand_path('../argparser/examples/example.rb', __FILE__)
-  end
-
-end # the very end
+end
