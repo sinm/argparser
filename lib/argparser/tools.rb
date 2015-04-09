@@ -6,8 +6,8 @@ class ArgParser
 
     # Sets self state from a hash given
     def hash2vars!(hash)
-      if hash.kind_of?(Hash) || hash.respond_to?(:to_h)
-        hash.to_h.each do |k, v|
+      if hash.kind_of?(Hash) || (hash.respond_to?(:to_h) && (hash = hash.to_h))
+        hash.each do |k, v|
           next unless self.respond_to?(k)
           instance_variable_set("@#{k}", v)
         end
