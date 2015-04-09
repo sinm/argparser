@@ -124,6 +124,7 @@ class ArgParser
       o = self[o]
       o.set_value(nil)
       o.validate!(self)
+      o.reset! # If it didn't terminate while validating
     }
 
     args = arguments.dup
