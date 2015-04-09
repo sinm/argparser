@@ -174,4 +174,21 @@ describe 'input argument name used as an option' do
   it 'should terminate if so' do
     lambda { @args.parse!(%w[--file2 --]) }.must_raise(ExitStub)
   end
+describe 'optional tiny features' do
+  before do
+    @b_manifest = a_manifest.merge({
+      :options => (a_manifest[:options] + [{
+          :names => ['a', "\n aaaaa \t "],
+          :multiple => true,
+          :argument => 'arg'
+        }])
+    })
+    @args = ArgParser.new(@b_manifest)
+  end
+  it 'allows to get value as string' do
+    @args.parse!(%w[--aaaaa foo])
+    "#{@args['aaaaa']}".must_equal('foo')
+    @args.parse!(%w[--aaaaa foo -abar])
+    "#{@args['aaaaa']}".must_equal('foo, bar')
+  end
 end

@@ -44,7 +44,11 @@ class ArgParser
     end
 
     def to_s
-      value
+      if multiple
+        value.empty? ? '' : value.map(&:to_s).join(', ')
+      else
+        value.to_s
+      end
     end
 
     def synopsis
