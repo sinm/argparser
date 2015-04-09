@@ -57,11 +57,10 @@ class ArgParser
   end
 
   def initialize(manifest)
-    manifest = {
-      :options    => []
-    }.merge(safe_return('$config.manifest') || {}).merge(manifest)
+    manifest = (safe_return('$config.manifest') || {}).merge(manifest)
     hash2vars!(manifest)
-    @options = manifest[:options].map { |o| Option.new(o) }
+    @options = (manifest[:options] || manifest['options'] || []).
+      map {|o| o.kind_of?(Option) ? o : Option.new(o)}
     if !self['help']
       options << Option.new(:names    => OPT_HELP,
                             :help     => 'Print this help and exit.',
@@ -196,9 +195,9 @@ class ArgParser
     end
 
     options.each { |o|
-      next if o.validate!(self)
-      terminate(2, OUT_INVALID_OPTION % o.name)
+      terminate(2, OUT_INVALID_OPTION % o.name) unless o.validate!(self)
     }
+
     self
   end
 
