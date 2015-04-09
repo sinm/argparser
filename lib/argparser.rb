@@ -218,32 +218,22 @@ class ArgParser
   def printed_version
     pk = (pk = @package) ? " (#{pk})" : ''
     str = ''
-    str << (OUT_VERSION    % [@program, pk, @version]) + "\n"
-    str << (OUT_COPYRIGHT  % @copyright) + "\n" if @copyright
-    str << (OUT_LICENSE    % @license) + "\n" if @license
+    str << (OUT_VERSION    % [@program, pk, @version]) << "\n"
+    str << (OUT_COPYRIGHT  % @copyright) << "\n" if @copyright
+    str << (OUT_LICENSE    % @license) << "\n" if @license
     str
   end
 
   def printed_help
-    str = printed_synopsis + "\n"
-    str << info + "\n\n" if info
+    str = printed_synopsis << "\n"
+    str << info << "\n\n" if info
     if help
-      str << help + "\n"
+      str << help << "\n"
     else
-      opts = []
-      options.select{|o| !o.input}.each do |o|
+      (options.select{|o| !o.input} + inputs).each do |o|
         next unless h = o.help
         h << "\n\tDefaults to: #{o.default}" if o.default
-        opts << [o.synopsis, h]
-      end
-      inputs.each do |i|
-        next unless i.help
-        help = i.help
-        help << "\n\tDefaults to: #{i.default}" if i.default
-        opts << [i.synopsis, help]
-      end
-      opts.each do |o|
-        str << "%s\n\t%s\n" % [o.first, o.last]
+        str << "%s\n\t%s\n" % [o.synopsis, h]
       end
       # term_width = ENV['COLUMNS'] || `tput columns` || 80
       # name_width = opts.reduce(0){|max, o| (sz = o.first.size) > max ? sz : max}
@@ -258,8 +248,7 @@ class ArgParser
 
   def printed_synopsis
     s = synopsis ||
-      (options.select{|o| !o.input} + inputs).map{|o|
-        OPTS_RESERVED.include?(o.name) ? nil : o.synopsis}.compact.join(' ')
+      (options.select{|o| !o.input} + inputs).map{|o| o.synopsis}.join(' ')
     "#{program} #{s}"
   end
 end
