@@ -1,5 +1,5 @@
 # coding: utf-8
-require File.expand_path('../spec_helper.rb', __FILE__)
+require 'spec_helper'
 
 a_manifest = {
   :program => 'a_example',  # Use additional properties like these:
@@ -157,5 +157,21 @@ describe 'required option' do
   it 'lives with an optional one' do
     @args.parse!(%w[--mode first -rmsecond])
     @args['required'].count.must_equal(1)
+  end
+end
+
+describe 'input argument name used as an option' do
+  before do
+    b_manifest = a_manifest.merge({
+      :options => (a_manifest[:options] << {
+          :names => %w[file2],
+          :input => true
+        })
+    })
+    @args = ArgParser.new(b_manifest)
+  end
+
+  it 'should terminate if so' do
+    lambda { @args.parse!(%w[--file2 --]) }.must_raise(ExitStub)
   end
 end

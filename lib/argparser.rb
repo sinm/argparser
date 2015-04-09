@@ -139,7 +139,7 @@ class ArgParser
           terminate(2, OUT_UNEXPECTED_ARGUMENT % a)
         end
       elsif a =~ /^--(.+)/ # long option
-        if $1.size > 1 && option = self[$1]
+        if $1.size > 1 && (option = self[$1]) && !option.input
           if option.argument
             if args.empty?
               terminate(2, OUT_OPTION_ARGUMENT_EXPECTED % a)
@@ -153,7 +153,7 @@ class ArgParser
         end
       elsif a =~ /^-([^-].*)/ # short option, combines, trailing argument
         (opts = $1).chars.to_a.each_with_index do |char, index|
-          if (option = self[char])
+          if (option = self[char]) && !option.input
             if option.argument
               if opts.size-1 == index
                 if args.empty?
