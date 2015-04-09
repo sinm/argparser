@@ -6,10 +6,15 @@ class ArgParser
 
     # Sets self state from a hash given
     def hash2vars!(hash)
-      hash.each do |k, v|
-        next unless self.respond_to?(k)
-        instance_variable_set("@#{k}", v)
+      if hash.respond_to?(:to_h)
+        hash.to_h.each do |k, v|
+          next unless self.respond_to?(k)
+          instance_variable_set("@#{k}", v)
+        end
+      else
+        raise 'Hash expected'
       end
+      self
     end
 
     # Returns a hash of self state, packing all objects to hashes
@@ -26,5 +31,25 @@ class ArgParser
     rescue NameError, NoMethodError
       nil
     end
+
+=begin Deep pack
+    def to_hash(deep = true)
+      instance_variables.reduce({}) { |hash, var|
+        value = instance_variable_get(var)
+        hash[var[1..-1]] = deep ? value_to_hash(value) : value
+        hash }
+    end
+
+    private
+    def value_to_hash value
+      if value.respond_to?(:to_hash)
+        (v = value.to_hash).kind_of?(Hash) ? v : {}
+      elsif value.respond_to?(:to_a)
+        (v = value.to_a).kind_of?(Array) ? v.map{|v| value_to_hash(v)} : []
+      else
+        value
+      end
+    end
+=end
   end
 end
