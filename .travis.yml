@@ -5,6 +5,7 @@ rvm:
   - "2.0.0"
   - "2.1" # latest 2.1.x
   - "2.2" # latest 2.2.x
+  - "jruby-18mode"
   - "jruby-19mode"
 script:
   CODECLIMATE_REPO_TOKEN=3a1b48c656a57cdd02824699a1352f8a0648e9b41f3df18323b8c48bab22b5ce bundle exec rake test

@@ -27,8 +27,8 @@ class ArgParser
     # Constructs option from Hash of properties (see attr_readers)
     def initialize(o_manifest)
       hash2vars!(o_manifest)
-      @names = Array(names).map{|n|n.to_s.strip}
-        .sort{|n1, n2| n1.size <=> n2.size}
+      @names = Array(names).map{|n|n.to_s.strip}.
+        sort{|n1, n2| n1.size <=> n2.size}
       reset!
     end
 
