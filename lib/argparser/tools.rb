@@ -3,7 +3,6 @@
 class ArgParser
   # Aux tools intented to include into a class
   module Tools
-
     # Sets self state from a hash given
     def hash2vars!(hash)
       if hash.kind_of?(Hash) || (hash.respond_to?(:to_h) && (hash = hash.to_h))
@@ -27,7 +26,9 @@ class ArgParser
     # Eval ruby code.
     # Returns result of Kernel.eval or nil if some errors occure
     def safe_return(str)
+      # rubocop:disable Lint/Eval
       eval(str)
+      # rubocop:enable Lint/Eval
     rescue NameError, NoMethodError
       nil
     end

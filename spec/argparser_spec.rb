@@ -10,7 +10,7 @@ a_manifest = {
     :default    => 'first',
     :multiple   => true,
     :help       => 'Example mode.',
-    :validate   => (lambda {|this, parser|  # Validating value in-line
+    :validate   => (lambda {|this, _parser|  # Validating value in-line
       possible = this.argument.split('|')
       this.value.select{|v| possible.include?(v)}.size == this.value.size })
   }, {

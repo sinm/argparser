@@ -1,9 +1,11 @@
 # coding: utf-8
 require 'argparser/tools'
 require 'argparser/option'
+require 'argparser/default_parser'
 
 class ArgParser
   include Tools
+  include DefaultParser
 
   # Output messages used in the #terminate method
   OUT_VERSION = '%s%s %s'
@@ -77,179 +79,50 @@ class ArgParser
     end
   end
 
-  # Uses ARGV by default, but you may supply your own arguments
-  # It exits if bad arguments given or they aren't validated.
-  def parse!(arguments = ARGV)
-    @options.each(&:reset!)
-
-    {:program => @program, :version => @version}.each do |k, v|
-      if !v || v.to_s.strip.empty?
-        terminate(2, OUT_MANIFEST_EXPECTED % k)
-      end
-    end
-
-    is = inputs
-    is.each_with_index do |i, index|
-      if index < is.length-1 and i.multiple
-        terminate(2, OUT_MULTIPLE_INPUTS % i.name)
-      end
-      if i.names.size > 1
-        terminate(2, OUT_MULTIPLE_NAMES % i.name)
-      end
-    end
-    first_optional = is.index{|i| !i.required} || is.size
-    last_required  = is.rindex{|i| i.required} || 0
-    if last_required > first_optional
-      terminate(2, OUT_REQUIRED % is[last_required].name)
-    end
-
-    names = {}
-    options.each do |option|
-      option.names.each do |name|
-        if name.empty?
-          terminate(2, OUT_OPTION_NULL)
-        end
-        if names.has_key?(name)
-          terminate(2, OUT_UNIQUE_NAME % name)
-        end
-        names[name] = option
-      end
-      if option.required && option.default
-        terminate(2, OUT_REQUIRED_DEFAULT % option.name)
-      end
-    end
-
-    OPTS_RESERVED.each { |o|
-      next unless arguments.include?("--#{o}")
-      o = self[o]
-      o.set_value(nil)
-      o.validate!(self)
-      o.reset! # If it didn't terminate while validating
-    }
-
-    args = arguments.dup
-    enough = false
-    while (a = args.shift)
-      if a == OPT_ENOUGH
-        enough = true
-      elsif enough || (a =~ /^[^-]/) || (a == '-') # input argument
-        if (input = inputs.find{|i| !i.value || i.multiple})
-          input.set_value(a)
-        else
-          terminate(2, OUT_UNEXPECTED_ARGUMENT % a)
-        end
-      elsif a =~ /^--(.+)/ # long option
-        if $1.size > 1 && (option = self[$1]) && !option.input
-          if option.argument
-            if args.empty?
-              terminate(2, OUT_OPTION_ARGUMENT_EXPECTED % a)
-            end
-            option.set_value(args.shift)
-          else
-            option.set_value(nil)
-          end
-        else
-          terminate(2, OUT_UNKNOWN_OPTION % $1)
-        end
-      elsif a =~ /^-([^-].*)/ # short option, combines, trailing argument
-        (opts = $1).chars.to_a.each_with_index do |char, index|
-          if (option = self[char]) && !option.input
-            if option.argument
-              if opts.size-1 == index
-                if args.empty?
-                  terminate(2, OUT_OPTION_ARGUMENT_EXPECTED % a)
-                else
-                  option.set_value(args.shift)
-                end
-              else
-                option.set_value(opts[index+1..-1])
-                break
-              end
-            else
-              option.set_value(nil)
-            end
-          else
-            terminate(2, OUT_UNKNOWN_OPTION % char)
-          end
-        end
-      else
-        terminate(2, OUT_UNKNOWN_OPTION % a)
-      end
-    end
-
-    options.each do |option|
-      if  !option.value? && (option.argument || option.input) &&
-          ((option.env      && (e = ENV[option.env])) ||
-          (option.eval      && (e = safe_return(option.eval))) ||
-          (!!option.default && (e = option.default)))
-            option.set_value(e)
-      end
-      if !option.multiple && option.count > 1
-        terminate(2, OUT_SINGLE_OPTION % option.name)
-      elsif option.required && option.count < 1
-        if option.input
-          terminate(2, OUT_ARGUMENT_EXPECTED % option.name)
-        else
-          terminate(2, OUT_OPTION_EXPECTED % option.name)
-        end
-      end
-    end
-
-    options.each { |o|
-      terminate(2, OUT_INVALID_OPTION % o.name) unless o.validate!(self)
-    }
-
-    self
-  end
-
   def terminate(code, str)
-    s = ''
-    s << printed_synopsis << "\n" if code != 0
-    s << str
-    s << "\n" unless str[-1] == "\n"
-    stream = code == 0 ? $stdout : $stderr
-    stream.print(s)
-    on_exit(code, s)
+    s = StringIO.new
+    s.puts(printed_synopsis) if code != 0
+    s.puts(str[-1] == "\n" ? str.chop : str)
+    on_exit(code, s.string)
   end
 
   def on_exit(code, message)
+    (code == 0 ? $stdout : $stderr).print(message)
     exit(code)
   end
 
   def printed_version
+    str = StringIO.new
     pk = (pk = @package) ? " (#{pk})" : ''
-    str = ''
-    str << (OUT_VERSION    % [@program, pk, @version]) << "\n"
-    str << (OUT_COPYRIGHT  % @copyright) << "\n" if @copyright
-    str << (OUT_LICENSE    % @license) << "\n" if @license
-    str
+    str.puts(OUT_VERSION % [program, pk, version])
+    str.puts(OUT_COPYRIGHT % copyright) if copyright
+    str.puts(OUT_LICENSE % license) if license
+    str.string
   end
 
   def printed_help
-    str = printed_synopsis << "\n"
-    str << info << "\n\n" if info
+    str = StringIO.new
+    str.puts(printed_synopsis)
+    str.puts(info) if info
     if help
-      str << help << "\n"
+      str.puts(help)
     else
       (options.select{|o| !o.input} + inputs).each do |o|
-        next unless h = o.help
-        h << "\n\tDefaults to: #{o.default}" if o.default
-        str << "%s\n\t%s\n" % [o.synopsis, h]
+        str.puts(o.printed_help)
       end
       # term_width = ENV['COLUMNS'] || `tput columns` || 80
-      # name_width = opts.reduce(0){|max, o| (sz = o.first.size) > max ? sz : max}
-      # help_width = term_width - (name_width += 1)
+      # width = opts.reduce(0){|max, o| (sz = o.first.size) > max ? sz : max}
+      # help_width = term_width - (width += 1)
       # if help_width < 32...
     end
-    str << (OUT_BUGS % @bugs) + "\n" if bugs
-    what = @package || @program
-    str << (OUT_HOMEPAGE % [what, @homepage]) + "\n" if homepage
-    str
+    str.puts(OUT_BUGS % bugs) if bugs
+    str.puts(OUT_HOMEPAGE % [(package||program), homepage]) if homepage
+    str.string
   end
 
   def printed_synopsis
     s = synopsis ||
       (options.select{|o| !o.input} + inputs).map{|o| o.synopsis}.join(' ')
-    "#{program} #{s}"
+    "Usage: #{program} #{s}"
   end
 end

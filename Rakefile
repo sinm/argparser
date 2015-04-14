@@ -2,7 +2,7 @@
 require 'rake/testtask'
 
 Rake::TestTask.new :test do |t|
-  #t.test_files = FileList['spec/*_spec.rb']
+  # t.test_files = FileList['spec/*_spec.rb']
   t.pattern = 'spec/**/*_spec.rb'
   t.libs.push 'spec'
 end
