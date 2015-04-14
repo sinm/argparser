@@ -100,5 +100,23 @@ class ArgParser
         yield(OUT_REQUIRED_DEFAULT % name)
       end
     end
+
+    class << self
+      def create_help
+        Option.new( :names    => OPT_HELP,
+                    :help     => 'Print this help and exit.',
+                    :validate => (lambda { |o, p|
+                      return true if o.count < 1
+                      p.terminate(0, p.printed_help) }))
+      end
+
+      def create_version
+        Option.new( :names    => OPT_VERSION,
+                    :help     => 'Print version and exit.',
+                    :validate => (lambda { |o, p|
+                      return true if o.count < 1
+                      p.terminate(0, p.printed_version) }))
+      end
+    end
   end
 end
