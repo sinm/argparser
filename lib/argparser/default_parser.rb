@@ -5,18 +5,17 @@ class ArgParser
   module DefaultParser
     # Uses ARGV by default, but you may supply your own arguments
     # It exits if bad arguments given or they aren't validated.
-    def parse!(arguments = ARGV)
+    def parse!(argv = ARGV)
       options.each(&:reset!)
       _check_manifest!
 
-      OPTS_RESERVED.each { |o|
-        next unless arguments.include?("--#{o}")
-        self[o].set_value(nil)
-        self[o].validate!(self)
-        self[o].reset! # If it didn't terminate while validating
-      }
+      OPTS_RESERVED.each do |res|
+        name = res[:names]
+        next unless argv.include?("--#{name}") && !get_argument(name)
+        terminate(0, self.send(res[:func]))
+      end
 
-      args = arguments.dup
+      args = argv.dup
       enough = false
       while (a = args.shift)
         if a == OPT_ENOUGH
@@ -47,7 +46,7 @@ class ArgParser
     private
 
     def _set_argument!(a)
-      if (input = inputs.find{|i| !i.value || i.multiple})
+      if (input = arguments.find{|i| !i.value || i.multiple})
         input.set_value(a)
       else
         terminate(2, OUT_UNEXPECTED_ARGUMENT % a)
@@ -92,17 +91,12 @@ class ArgParser
         terminate(2, OUT_MANIFEST_EXPECTED % k) if !v || v.to_s.strip.empty?
       end
 
-      is = inputs
-      is.each_with_index do |i, index|
-        if index < is.length-1 && i.multiple
-          terminate(2, OUT_MULTIPLE_INPUTS % i.name)
-        elsif i.names.size > 1
-          terminate(2, OUT_MULTIPLE_NAMES % i.name)
-        end
+      arguments[0..-2].each do |i|
+        terminate(2, OUT_MULTIPLE_INPUTS % i.name) if i.multiple
       end
-      opt = is.index{|i| !i.required} || is.size
-      req  = is.rindex{|i| i.required} || 0
-      terminate(2, OUT_REQUIRED % is[req].name) if req > opt
+      opt = arguments.index{|i|  !i.required} || arguments.size
+      req  = arguments.rindex{|i| i.required} || 0
+      terminate(2, OUT_REQUIRED % arguments[req].name) if req > opt
 
       names = {}
       options.each do |option|

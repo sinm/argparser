@@ -29,7 +29,7 @@ class ArgParser
       # rubocop:disable Lint/Eval
       eval(str)
       # rubocop:enable Lint/Eval
-    rescue NameError, NoMethodError
+    rescue NameError
       nil
     end
 

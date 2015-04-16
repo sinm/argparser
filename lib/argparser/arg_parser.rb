@@ -30,9 +30,12 @@ class ArgParser
 
   # These options don't display their synopsis and given for free unless
   # explicitly specified in the manifest.
-  OPT_HELP    = 'help'
-  OPT_VERSION = 'version'
-  OPTS_RESERVED = [OPT_HELP, OPT_VERSION]
+  OPTS_RESERVED = [{:func => :printed_help,
+                    :help => 'Print this help and exit.',
+                    :names=> 'help'},
+                   {:func => :printed_version,
+                    :help => 'Print version and exit.',
+                    :names=> 'version'}]
 
   attr_reader :program    # Program name, REQUIRED
   attr_reader :package    # Set to nil if there's no package
@@ -44,7 +47,7 @@ class ArgParser
   attr_reader :homepage   # Package or, if absent, program's home page
   attr_reader :synopsis   # Print this if present or construct from options
   attr_reader :help       # Print this if present or construct from options
-  attr_reader :options    # Array of options,
+  attr_reader :options    # Array of options/arguments,
                           # see ArgParser::Option class' attr_readers
 
   # Returns option by any of its names given
@@ -53,11 +56,19 @@ class ArgParser
   end
 
   # Returns array of input args in order
-  def inputs
+  def arguments
     options.select{|o| o.input}
   end
 
-  def not_inputs
+  def get_argument(name)
+    (i = self[name]) && i.input ? i : nil
+  end
+
+  def get_opt(name)
+    (i = self[name]) && i.input ? nil : i
+  end
+
+  def opts
     options.select{|o| !o.input}
   end
 
@@ -66,8 +77,6 @@ class ArgParser
     hash2vars!(manifest)
     @options = (manifest[:options] || manifest['options'] || []).
       map {|o| o.kind_of?(Option) ? o : Option.new(o)}
-    options << Option.create_help     if !self['help']
-    options << Option.create_version  if !self['version']
   end
 
   def terminate(code, str)
@@ -98,13 +107,18 @@ class ArgParser
     if help
       str.puts(help)
     else
-      unless (opts = not_inputs).empty?
+      unless (os = opts).empty?
         str.puts(CAPTION_OPTIONS)
-        opts.each {|o| str.puts(o.printed_help)}
+        os.each {|o| str.puts(o.printed_help)}
       end
-      unless (opts = inputs).empty?
+      OPTS_RESERVED.each do |res|
+        r = Option.new(res)
+        next if get_argument(r.name)
+        str.puts(r.printed_help)
+      end
+      unless (os = arguments).empty?
         str.puts(CAPTION_ARGUMENTS)
-        opts.each {|o| str.puts(o.printed_help)}
+        os.each {|o| str.puts(o.printed_help)}
       end
     end
     str.puts(OUT_BUGS % bugs) if bugs
@@ -114,7 +128,7 @@ class ArgParser
 
   def printed_synopsis
     s = synopsis ||
-      (options.select{|o| !o.input} + inputs).map{|o| o.synopsis}.join(' ')
+      (options.select{|o| !o.input} + arguments).map{|o| o.synopsis}.join(' ')
     "Usage: #{program} #{s}"
   end
 end
