@@ -1,7 +1,9 @@
 # coding: utf-8
+require File.expand_path('../lib/argparser/version.rb', __FILE__)
+
 Gem::Specification.new do |s|
   s.name          = 'argparser'
-  s.version       = '1.0.1'
+  s.version       = ArgParser::VERSION
   s.authors       = ['sinm']
   s.email         = 'sinm.sinm@gmail.com'
   s.summary       = 'Yet another ruby command line argument parser library'
