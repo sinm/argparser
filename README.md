@@ -93,6 +93,9 @@ Unknown option: a
 * `:eval => 'ruby expr'` to pick default from eval(...), useful for read defaults from config files, so it has low priority
 * `--` argument honored
 
+## Tests
+`bundle exec rake test`
+
 ## Documentation
 This README is all i could say in a rush. No other documentation provided at this moment, see the sources.
 

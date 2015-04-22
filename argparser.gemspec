@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   #                      '--main' << 'README'     <<
   #                      '--markup' << 'markdown' <<
   #                      '--line-numbers'
-  s.add_development_dependency 'bundler',    '~> 1'
-  s.add_development_dependency 'rake',       '~> 10'
-  s.add_development_dependency 'minitest',   '~> 4'
+  s.add_development_dependency 'bundler',    '~> 1.7'
+  s.add_development_dependency 'rake',       '~> 10.1'
+  s.add_development_dependency 'minitest',   '~> 4.7'
 end
