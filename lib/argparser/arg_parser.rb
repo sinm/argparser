@@ -35,7 +35,7 @@ class ArgParser
   attr_reader :version    # Follow semantic versioning rules, REQUIRED
   attr_reader :copyright  # Like '2015 Somebody, Inc.',
   attr_reader :license    # Give license headline
-  attr_reader :info       # Set additional lines that would follow license
+  attr_reader :info       # Program info string
   attr_reader :bugs       # Address to post bug reports
   attr_reader :homepage   # Package or, if absent, program's home page
   attr_reader :synopsis   # Build from options if not given

@@ -2,9 +2,15 @@
 require 'spec_helper'
 
 a_manifest = {
-  :program => 'a_example',  # Use additional properties like these:
-  :version => '1.0',        #   :info, :copyright, :license,
-  :options => [{            #   :package, :bugs, :homepage
+  :program  => 'a_example',  # Use additional properties like these:
+  :version  => '1.0',        #   :info, :copyright, :license,
+  :copyright=> '2015 sinm',
+  :info => 'A Example',
+  :license  => 'MIT',
+  :package  => 'ArgParser Spec',
+  :bugs     => 'https://github.com/sinm/argparser',
+  :homepage => 'https://github.com/sinm/argparser',
+  :options  => [{            #   :package, :bugs, :homepage
     :names      => %w[m mode],
     :param      => 'first|second|third',
     :default    => 'first',
@@ -58,6 +64,10 @@ describe 'Built-in options' do
     }.must_raise(ExitStub)
     e.status.must_equal(0)
     e.message.must_match(/#{a_manifest[:program]}.*#{a_manifest[:version]}/)
+    e.message.must_equal(
+      "a_example (ArgParser Spec) 1.0
+Copyright (C) 2015 sinm
+License: MIT\n")
   end
 
   it 'prints out help and terminates' do
@@ -67,6 +77,24 @@ describe 'Built-in options' do
     }.must_raise(ExitStub)
     e.status.must_equal(0)
     e.message.must_match(/#{a_manifest[:options].last[:help]}/)
+    e.message.must_equal(
+      "Usage: a_example [-m, --mode first|second|third]... [file]
+A Example
+OPTIONS:
+[-m, --mode first|second|third]...
+\tExample mode.
+\tDefaults to: first
+[--help]
+\tPrint this help and exit.
+[--version]
+\tPrint version and exit.
+ARGUMENTS:
+[file]
+\tFilename or - for stdin.
+\tDefaults to: -
+Report bugs to: https://github.com/sinm/argparser
+ArgParser Spec home page: https://github.com/sinm/argparser\n")
+
   end
 
   it 'prints synopsys on argument error' do
