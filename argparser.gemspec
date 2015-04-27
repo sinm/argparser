@@ -10,9 +10,11 @@ Gem::Specification.new do |s|
   s.description   = '== Yet another ruby command line argument parser library'
   s.homepage      = 'https://github.com/sinm/argparser'
   s.license       = 'MIT'
-  s.files         = `git ls-files -z`.split("\x0")
-  s.test_files    = `git ls-files -z spec/`.split("\0")
+  s.files         = `git ls-files`.split("\n")
+  s.test_files    = `git ls-files -- spec/`.split("\n")
   s.require_paths = ['lib']
+  s.bindir        = 'bin'
+  s.executables   = `git ls-files -- bin/`.split("\n").map{|f| File.basename(f)}
   # s.extra_rdoc_files = 'README.md'
   # s.rdoc_options  << '--title' << 'argparser' <<
   #                      '--main' << 'README'     <<

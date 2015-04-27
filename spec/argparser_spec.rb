@@ -6,16 +6,16 @@ a_manifest = {
   :version => '1.0',        #   :info, :copyright, :license,
   :options => [{            #   :package, :bugs, :homepage
     :names      => %w[m mode],
-    :argument   => 'first|second|third',
+    :param      => 'first|second|third',
     :default    => 'first',
     :multiple   => true,
     :help       => 'Example mode.',
     :validate   => (lambda {|this, _parser|  # Validating value in-line
-      possible = this.argument.split('|')
+      possible = this.param.split('|')
       this.value.select{|v| possible.include?(v)}.size == this.value.size })
-  }, {
-    :names      => 'file',
-    :input      => true,
+  }],
+  :arguments => [{
+    :name       => 'file',
     :required   => false,
     :default    => '-',
     :help       => 'Filename or - for stdin.'
@@ -35,17 +35,12 @@ describe 'manifest' do
 
   it 'should require program' do
     b_manifest = a_manifest.merge(:program => '')
-    args = ArgParser.new(b_manifest)
-    lambda {
-      args.parse!([])
-    }.must_raise(ExitStub).status.must_equal(2)
+    lambda { ArgParser.new(b_manifest) }.must_raise(ArgParser::ManifestError)
   end
 
   it 'should require version' do
     b_manifest = a_manifest.merge(:version => nil)
-    lambda {
-      ArgParser.new(b_manifest).parse!([])
-    }.must_raise(ExitStub).status.must_equal(2)
+    lambda { ArgParser.new(b_manifest) }.must_raise(ArgParser::ManifestError)
   end
 
   it 'requires nothing but but program & version' do
@@ -155,9 +150,8 @@ end
 describe 'input argument' do
   before do
     @b_manifest = a_manifest.merge({
-      :options => (a_manifest[:options] + [{
-          :names => %w[file2],
-          :input => true
+      :arguments => (a_manifest[:arguments] + [{
+          :name => 'file2'
         }])
     })
     @args = ArgParser.new(@b_manifest)
@@ -178,18 +172,12 @@ describe 'optional tiny features' do
   before do
     @b_manifest = a_manifest.merge({
       :options => (a_manifest[:options] + [{
-          :names => ['a', "\n aaaaa \t "],
+          :names => ['a', 'aaaaa'],
           :multiple => true,
-          :argument => 'arg'
+          :param => 'arg'
         }])
     })
     @args = ArgParser.new(@b_manifest)
-  end
-
-  it 'ignores whitespace in option names' do
-    "\n aaaaa \t ".strip.must_equal('aaaaa')
-    @args.parse!(%w[--aaaaa foobar])
-    @args['aaaaa'].value.must_equal(['foobar'])
   end
 
   it 'allows to get value as string' do

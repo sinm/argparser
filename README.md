@@ -1,7 +1,7 @@
 # argparser
 Yet another ruby command line argument parser library.
 
-[![Build Status](https://travis-ci.org/sinm/argparser.svg?branch=master)](https://travis-ci.org/sinm/argparser) [![Gem Version](https://badge.fury.io/rb/argparser.svg)](http://badge.fury.io/rb/argparser) [![Dependency Status](https://gemnasium.com/sinm/argparser.svg)](https://gemnasium.com/sinm/argparser) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/sinm/argparser/master/LICENSE.txt) [![Code Climate](https://codeclimate.com/github/sinm/argparser/badges/gpa.svg)](https://codeclimate.com/github/sinm/argparser) [![Test Coverage](https://codeclimate.com/github/sinm/argparser/badges/coverage.svg)](https://codeclimate.com/github/sinm/argparser) [![Inline docs](http://inch-ci.org/github/sinm/argparser.svg?branch=master)](http://inch-ci.org/github/sinm/argparser)
+[![Build Status](https://travis-ci.org/sinm/argparser.svg?branch=master)](https://travis-ci.org/sinm/argparser) [![Gem Version](https://badge.fury.io/rb/argparser.svg)](http://badge.fury.io/rb/argparser) [![Dependency Status](https://gemnasium.com/sinm/argparser.svg)](https://gemnasium.com/sinm/argparser) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/sinm/argparser/master/LICENSE.txt) [![Code Climate](https://codeclimate.com/github/sinm/argparser/badges/gpa.svg)](https://codeclimate.com/github/sinm/argparser) [![Test Coverage](https://codeclimate.com/github/sinm/argparser/badges/coverage.svg)](https://codeclimate.com/github/sinm/argparser) [![Inline docs](http://inch-ci.org/github/sinm/argparser.svg?branch=master)](http://inch-ci.org/github/sinm/argparser) [![security](https://hakiri.io/github/sinm/argparser/master.svg)](https://hakiri.io/github/sinm/argparser/master)
 
 ## Installation
 `gem install argparser` as usual.
@@ -86,11 +86,9 @@ Unknown option: a
 ````
 
 ## Consider more rules
-* `--help` and `--version` options provided for free unless specified
-* printed synopsis provided for free unless specified
-* `:default` used if option has :argument and no value given, lowest priority
-* `:env  => 'ENV_VAR'` to pick default value from ENV, high priority
-* `:eval => 'ruby expr'` to pick default from eval(...), useful for read defaults from config files, so it has low priority
+* `--help` and `--version` options provided unless specified explicitly
+* printed synopsis provided unless specified explicitly
+* `:default` setting assigns default option's value if value isn't specified, may be proc/lambda
 * `--` argument honored
 
 ## Tests

@@ -2,81 +2,121 @@
 
 class ArgParser
   include Tools
-  include DefaultParser
 
-  # Output messages used in the #terminate method
-  OUT_VERSION = '%s%s %s'
+  # Output templates used for the #terminate(0) call
+  OUT_VERSION   = '%s%s %s'
   OUT_COPYRIGHT = 'Copyright (C) %s'
-  OUT_LICENSE = 'License: %s'
-  OUT_HOMEPAGE = '%s home page: %s'
-  OUT_BUGS = 'Report bugs to: %s'
-  OUT_MANIFEST_EXPECTED = 'Property expected through the manifest: %s'
-  OUT_MULTIPLE_INPUTS = 'Multiple input argument not allowed in the middle: %s'
-  OUT_MULTIPLE_NAMES = 'Multiple names for the input argument: %s'
-  OUT_OPTION_NULL = 'Empty name for option'
-  OUT_REQUIRED = 'Required input argument after optional one: %s'
-  OUT_REQUIRED_DEFAULT = 'Required option has default value: %s'
-  OUT_UNEXPECTED_ARGUMENT = 'Unexpected argument: %s'
-  OUT_UNKNOWN_OPTION = 'Unknown option: %s'
-  OUT_OPTION_ARGUMENT_EXPECTED = 'Expected argument for the option: %s'
-  OUT_SINGLE_OPTION = 'Multiple options not allowed: %s'
-  OUT_OPTION_EXPECTED = 'Expected option: %s'
-  OUT_ARGUMENT_EXPECTED = 'Expected argument: %s'
-  OUT_UNIQUE_NAME = 'Option name should be unique: %s'
-  OUT_INVALID_OPTION = 'Invalid value for option: %s'
+  OUT_LICENSE   = 'License: %s'
+  OUT_HOMEPAGE  = '%s home page: %s'
+  OUT_BUGS      = 'Report bugs to: %s'
+  OUT_OPTIONS   = 'OPTIONS:'
+  OUT_ARGUMENTS = 'ARGUMENTS:'
+
+  # Templates used for the terminate(2) call
+  TRM_UNEXPECTED_ARGUMENT       = 'Unexpected argument: %s'
+  TRM_UNKNOWN_OPTION            = 'Unknown option: %s'
+  TRM_OPTION_ARGUMENT_EXPECTED  = 'Expected parameter for the option: %s'
+  TRM_EXPECTED                  = 'Expected required argument/option: %s'
+  TRM_INVALID_OPTION            = 'Invalid value for the argument/option: %s'
+
   OPT_ENOUGH  = '--'
-  CAPTION_OPTIONS = 'OPTIONS:'
-  CAPTION_ARGUMENTS = 'ARGUMENTS:'
 
   # These options don't display their synopsis and given for free unless
   # explicitly specified in the manifest.
   OPTS_RESERVED = [{:func => :printed_help,
                     :help => 'Print this help and exit.',
-                    :names=> 'help'},
+                    :name => 'help'},
                    {:func => :printed_version,
                     :help => 'Print version and exit.',
-                    :names=> 'version'}]
+                    :name => 'version'}]
 
   attr_reader :program    # Program name, REQUIRED
   attr_reader :package    # Set to nil if there's no package
   attr_reader :version    # Follow semantic versioning rules, REQUIRED
-  attr_reader :copyright  # '2015 Somebody, Inc.',
+  attr_reader :copyright  # Like '2015 Somebody, Inc.',
   attr_reader :license    # Give license headline
   attr_reader :info       # Set additional lines that would follow license
   attr_reader :bugs       # Address to post bug reports
   attr_reader :homepage   # Package or, if absent, program's home page
-  attr_reader :synopsis   # Print this if present or construct from options
-  attr_reader :help       # Print this if present or construct from options
-  attr_reader :options    # Array of options/arguments,
-                          # see ArgParser::Option class' attr_readers
+  attr_reader :synopsis   # Build from options if not given
+  attr_reader :help       # Build from options if not given
+  attr_reader :arguments  # Array of arguments
+  attr_reader :options    # Array of options
+                          # see ArgParser::Argument/Option classes attr_readers
+
+  class << self
+    def manifest=(manifest)
+      @@manifest = manifest
+    end
+    def manifest
+      @@manifest ||= {}
+    end
+  end
 
   # Returns option by any of its names given
   def [](name)
-    options.find{|o| o.names.include?(name)}
+    get_argument(name) || get_option(name)
   end
 
-  # Returns array of input args in order
-  def arguments
-    options.select{|o| o.input}
+  def all
+    options + arguments
   end
 
   def get_argument(name)
-    (i = self[name]) && i.input ? i : nil
+    arguments.find{|a| a.name == name}
   end
 
-  def get_opt(name)
-    (i = self[name]) && i.input ? nil : i
-  end
-
-  def opts
-    options.select{|o| !o.input}
+  def get_option(name)
+    options.find{|o| o.names.include?(name)}
   end
 
   def initialize(manifest)
-    manifest = (safe_return('$config.manifest') || {}).merge(manifest)
-    hash2vars!(manifest)
-    @options = (manifest[:options] || manifest['options'] || []).
-      map {|o| o.kind_of?(Option) ? o : Option.new(o)}
+    hash2vars!(manifest = ArgParser.manifest.merge(manifest))
+    @arguments =
+      (@arguments || []).map {|o| o.kind_of?(Argument) ? o : Argument.new(o)}
+    @options =
+      (@options || []).map   {|o| o.kind_of?(Option)   ? o : Option.new(o)}
+    _check_manifest!
+  end
+
+  # Uses ARGV by default, but you may supply your own arguments
+  # It exits if bad arguments given or they aren't validated.
+  def parse!(argv = ARGV)
+    all.each(&:reset!)
+    _check_manifest!
+
+    OPTS_RESERVED.each do |res|
+      name = res[:name]
+      next unless argv.include?("--#{name}") && !get_argument(name)
+      terminate(0, self.send(res[:func]))
+    end
+
+    args = argv.dup
+    enough = false
+    while (a = args.shift)
+      if a == OPT_ENOUGH
+        enough = true
+      elsif enough || (a =~ /^[^-]/) || (a == '-')
+        _set_argument!(a)
+      elsif a =~ /^--(.+)/
+        _set_long_option!(a, args)
+      elsif a =~ /^-([^-].*)/
+        _set_short_options!(a, args)
+      else
+        terminate(2, TRM_UNKNOWN_OPTION % a)
+      end
+    end
+
+    all.each { |o|
+      o.set_default!
+      terminate(2, (TRM_EXPECTED % o.name)) if o.required && o.count < 1
+    }
+
+    all.each { |o|
+      terminate(2, TRM_INVALID_OPTION % o.name) unless o.validate!(self)
+    }
+
+    self
   end
 
   def terminate(code, str)
@@ -107,18 +147,18 @@ class ArgParser
     if help
       str.puts(help)
     else
-      unless (os = opts).empty?
-        str.puts(CAPTION_OPTIONS)
-        os.each {|o| str.puts(o.printed_help)}
+      unless options.empty?
+        str.puts(OUT_OPTIONS)
+        options.each {|o| str.puts(o.printed_help)}
       end
       OPTS_RESERVED.each do |res|
         r = Option.new(res)
         next if get_argument(r.name)
         str.puts(r.printed_help)
       end
-      unless (os = arguments).empty?
-        str.puts(CAPTION_ARGUMENTS)
-        os.each {|o| str.puts(o.printed_help)}
+      unless arguments.empty?
+        str.puts(OUT_ARGUMENTS)
+        arguments.each {|a| str.puts(a.printed_help)}
       end
     end
     str.puts(OUT_BUGS % bugs) if bugs
@@ -127,8 +167,70 @@ class ArgParser
   end
 
   def printed_synopsis
-    s = synopsis ||
-      (options.select{|o| !o.input} + arguments).map{|o| o.synopsis}.join(' ')
-    "Usage: #{program} #{s}"
+    "Usage: #{program} #{synopsis || all.map{|o| o.synopsis}.join(' ')}"
+  end
+
+  private
+
+  def _check_manifest!
+    {:program => program, :version => version}.each do |k, v|
+      raise ManifestError, (ERR_MANIFEST_EXPECTED % k) if v.to_s.strip.empty?
+    end
+
+    arguments[0..-2].each do |i|
+      raise ManifestError, (ERR_MULTIPLE_INPUTS % i.name) if i.multiple
+    end
+    opt = arguments.index{|i|  !i.required} || arguments.size
+    req  = arguments.rindex{|i| i.required} || 0
+    raise ManifestError, (ERR_REQUIRED % arguments[req].name) if req > opt
+
+    names = {}
+    all.each do |option|
+      (option.is_a?(Option) ? option.names : [option.name]).each do |name|
+        raise ManifestError, (ERR_UNIQUE_NAME % name) if names.has_key?(name)
+        names[name] = option
+      end
+    end
+  end
+
+  def _set_argument!(a)
+    if (input = arguments.find{|i| !i.value || i.multiple})
+      input.set_value(a)
+    else
+      terminate(2, TRM_UNEXPECTED_ARGUMENT % a)
+    end
+  end
+
+  def _set_long_option!(a, tail)
+    a = a[2..-1]
+    if a.size > 1 && (option = get_option(a))
+      if option.param
+        terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % a) if tail.empty?
+        option.set_value(tail.shift)
+      else
+        option.set_value(nil)
+      end
+    else
+      terminate(2, TRM_UNKNOWN_OPTION % a)
+    end
+  end
+
+  def _set_short_options!(a, tail)
+    (a = a[1..-1]).chars.each_with_index do |char, index|
+      unless (option = get_option(char))
+        terminate(2, TRM_UNKNOWN_OPTION % char)
+      end
+      if option.param
+        if a.size-1 == index
+          terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % char) if tail.empty?
+          option.set_value(tail.shift)
+        else
+          option.set_value(a[index+1..-1])
+          break
+        end
+      else
+        option.set_value(nil)
+      end
+    end
   end
 end
