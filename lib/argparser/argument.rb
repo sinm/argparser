@@ -13,6 +13,10 @@ class ArgParser
     attr_reader   :count    # Occucences after parsing was done
     attr_accessor :value    # Value (Array if multiple) after parsing was done
 
+    def names
+      [name]
+    end
+
     # Constructs from Hash of properties (see attr_readers)
     def initialize(o_manifest)
       hash2vars!(o_manifest)

@@ -3,7 +3,7 @@ class ArgParser
   ERR_MANIFEST_EXPECTED = 'Property expected through the manifest: %s'
   ERR_MULTIPLE_INPUTS   = 'Multi-value argument allowed only if last: %s'
   ERR_REQUIRED          = 'Required argument after optional one: %s'
-  ERR_UNIQUE_NAME       = 'Option/argument name must be unique: %s'
+  ERR_UNIQUE_NAME       = 'All option/argument names must be unique'
   class ManifestError < RuntimeError
   end
 end

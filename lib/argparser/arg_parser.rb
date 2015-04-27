@@ -14,7 +14,7 @@ class ArgParser
 
   # Templates used for the terminate(2) call
   TRM_UNEXPECTED_ARGUMENT       = 'Unexpected argument: %s'
-  TRM_UNKNOWN_OPTION            = 'Unknown option: %s'
+  TRM_UNKNOWN                   = 'Unknown option: %s'
   TRM_OPTION_ARGUMENT_EXPECTED  = 'Expected parameter for the option: %s'
   TRM_EXPECTED                  = 'Expected required argument/option: %s'
   TRM_INVALID_OPTION            = 'Invalid value for the argument/option: %s'
@@ -99,11 +99,11 @@ class ArgParser
       elsif enough || (a =~ /^[^-]/) || (a == '-')
         _set_argument!(a)
       elsif a =~ /^--(.+)/
-        _set_long_option!(a, args)
+        _set_long_option!($1, args)
       elsif a =~ /^-([^-].*)/
-        _set_short_options!(a, args)
+        _set_short_options!($1, args)
       else
-        terminate(2, TRM_UNKNOWN_OPTION % a)
+        terminate(2, TRM_UNKNOWN % a)
       end
     end
 
@@ -184,41 +184,25 @@ class ArgParser
     req  = arguments.rindex{|i| i.required} || 0
     raise ManifestError, (ERR_REQUIRED % arguments[req].name) if req > opt
 
-    names = {}
-    all.each do |option|
-      (option.is_a?(Option) ? option.names : [option.name]).each do |name|
-        raise ManifestError, (ERR_UNIQUE_NAME % name) if names.has_key?(name)
-        names[name] = option
-      end
-    end
+    names = all.map(&:names).flatten
+    raise ManifestError, ERR_UNIQUE_NAME if names.size != names.uniq.size
   end
 
   def _set_argument!(a)
-    if (input = arguments.find{|i| !i.value || i.multiple})
-      input.set_value(a)
-    else
-      terminate(2, TRM_UNEXPECTED_ARGUMENT % a)
-    end
+    terminate(2, TRM_UNEXPECTED_ARGUMENT % a) unless
+     (input = arguments.find{|i| !i.value || i.multiple})
+    input.set_value(a)
   end
 
   def _set_long_option!(a, tail)
-    a = a[2..-1]
-    if a.size > 1 && (option = get_option(a))
-      if option.param
-        terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % a) if tail.empty?
-        option.set_value(tail.shift)
-      else
-        option.set_value(nil)
-      end
-    else
-      terminate(2, TRM_UNKNOWN_OPTION % a)
-    end
+    terminate(2, TRM_UNKNOWN % a) unless a.size > 1 && (o = get_option(a))
+    terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % a) if o.param && tail.empty?
+    o.set_value(o.param ? tail.shift : nil)
   end
 
   def _set_short_options!(a, tail)
     a.chars.each_with_index do |char, index|
-      next if index == 0 # suppress '-'
-      terminate(2, TRM_UNKNOWN_OPTION % char) unless (option = get_option(char))
+      terminate(2, TRM_UNKNOWN % char) unless (option = get_option(char))
       if !option.param
         option.set_value(nil)
       elsif a.size-1 == index
