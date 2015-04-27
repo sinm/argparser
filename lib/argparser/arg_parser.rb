@@ -216,20 +216,17 @@ class ArgParser
   end
 
   def _set_short_options!(a, tail)
-    (a = a[1..-1]).chars.each_with_index do |char, index|
-      unless (option = get_option(char))
-        terminate(2, TRM_UNKNOWN_OPTION % char)
-      end
-      if option.param
-        if a.size-1 == index
-          terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % char) if tail.empty?
-          option.set_value(tail.shift)
-        else
-          option.set_value(a[index+1..-1])
-          break
-        end
-      else
+    a.chars.each_with_index do |char, index|
+      next if index == 0 # suppress '-'
+      terminate(2, TRM_UNKNOWN_OPTION % char) unless (option = get_option(char))
+      if !option.param
         option.set_value(nil)
+      elsif a.size-1 == index
+        terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % char) if tail.empty?
+        option.set_value(tail.shift)
+      else
+        option.set_value(a[index+1..-1])
+        break
       end
     end
   end
