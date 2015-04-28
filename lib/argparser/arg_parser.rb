@@ -71,19 +71,19 @@ class ArgParser
   end
 
   def initialize(manifest)
-    hash2vars!(manifest = ArgParser.manifest.merge(manifest))
+    hash2vars(manifest = ArgParser.manifest.merge(manifest))
     @arguments =
       (@arguments || []).map {|o| o.kind_of?(Argument) ? o : Argument.new(o)}
     @options =
       (@options || []).map   {|o| o.kind_of?(Option)   ? o : Option.new(o)}
-    _check_manifest!
+    _check_manifest
   end
 
   # Uses ARGV by default, but you may supply your own arguments
   # It exits if bad arguments given or they aren't validated.
-  def parse!(argv = ARGV)
-    all.each(&:reset!)
-    _check_manifest!
+  def parse(argv = ARGV)
+    all.each(&:reset)
+    _check_manifest
 
     OPTS_RESERVED.each do |res|
       name = res[:name]
@@ -97,24 +97,26 @@ class ArgParser
       if a == OPT_ENOUGH
         enough = true
       elsif enough || (a =~ /^[^-]/) || (a == '-')
-        _set_argument!(a)
+        _set_argument(a)
       elsif a =~ /^--(.+)/
-        _set_long_option!($1, args)
+        _set_long_option($1, args)
       elsif a =~ /^-([^-].*)/
-        _set_short_options!($1, args)
+        _set_short_options($1, args)
       else
         terminate(2, TRM_UNKNOWN % a)
       end
     end
 
     all.each { |o|
-      o.set_default!
-      terminate(2, (TRM_EXPECTED % o.name)) if o.required && o.count < 1
+      o.set_default
+      terminate(2, (TRM_EXPECTED % o.name)) if o.required && !o.value?
     }
 
     all.each { |o|
-      terminate(2, TRM_INVALID_OPTION % o.name) unless o.validate!(self)
+      terminate(2, TRM_INVALID_OPTION % o.name) unless o.valid?(self)
     }
+
+    all.select(&:value?).each {|o| yield(o.name, o.value)} if block_given?
 
     self
   end
@@ -172,7 +174,7 @@ class ArgParser
 
   private
 
-  def _check_manifest!
+  def _check_manifest
     {:program => program, :version => version}.each do |k, v|
       raise ManifestError, (ERR_MANIFEST_EXPECTED % k) if v.to_s.strip.empty?
     end
@@ -188,28 +190,28 @@ class ArgParser
     raise ManifestError, ERR_UNIQUE_NAME if names.size != names.uniq.size
   end
 
-  def _set_argument!(a)
+  def _set_argument(a)
     terminate(2, TRM_UNEXPECTED_ARGUMENT % a) unless
      (input = arguments.find{|i| !i.value || i.multiple})
-    input.set_value(a)
+    input.add_value(a)
   end
 
-  def _set_long_option!(a, tail)
+  def _set_long_option(a, tail)
     terminate(2, TRM_UNKNOWN % a) unless a.size > 1 && (o = get_option(a))
     terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % a) if o.param && tail.empty?
-    o.set_value(o.param ? tail.shift : nil)
+    o.add_value(o.param ? tail.shift : nil)
   end
 
-  def _set_short_options!(a, tail)
+  def _set_short_options(a, tail)
     a.chars.each_with_index do |char, index|
       terminate(2, TRM_UNKNOWN % char) unless (option = get_option(char))
       if !option.param
-        option.set_value(nil)
+        option.add_value(nil)
       elsif a.size-1 == index
         terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % char) if tail.empty?
-        option.set_value(tail.shift)
+        option.add_value(tail.shift)
       else
-        option.set_value(a[index+1..-1])
+        option.add_value(a[index+1..-1])
         break
       end
     end

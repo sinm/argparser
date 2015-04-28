@@ -35,7 +35,7 @@ describe 'manifest' do
       o.must_be_instance_of(ArgParser::Option)
       args[o.name].must_be_same_as(o)
     }
-    (a = args.parse!(%w[-])).must_be_instance_of(ArgParser)
+    (a = args.parse(%w[-])).must_be_instance_of(ArgParser)
     a.must_be_same_as(args)
   end
 
@@ -52,7 +52,7 @@ describe 'manifest' do
   it 'requires nothing but but program & version' do
     b_manifest = a_manifest.reduce({}) {|h, (k, v)|
       h[k] = v if [:program, :version].include?(k); h}
-    ArgParser.new(b_manifest).parse!([]).must_be_instance_of(ArgParser)
+    ArgParser.new(b_manifest).parse([]).must_be_instance_of(ArgParser)
   end
 end
 
@@ -60,7 +60,7 @@ describe 'Built-in options' do
   it 'prints out version and terminates' do
     a = ArgParser.new(a_manifest)
     e = lambda {
-      a.parse!(%w[any --othelp --version])
+      a.parse(%w[any --othelp --version])
     }.must_raise(ExitStub)
     e.status.must_equal(0)
     e.message.must_match(/#{a_manifest[:program]}.*#{a_manifest[:version]}/)
@@ -73,7 +73,7 @@ License: MIT\n")
   it 'prints out help and terminates' do
     a = ArgParser.new(a_manifest)
     e = lambda {
-      a.parse!(%w[any --oth --help])
+      a.parse(%w[any --oth --help])
     }.must_raise(ExitStub)
     e.status.must_equal(0)
     e.message.must_match(/#{a_manifest[:options].last[:help]}/)
@@ -100,7 +100,7 @@ ArgParser Spec home page: https://github.com/sinm/argparser\n")
   it 'prints synopsys on argument error' do
     a = ArgParser.new(a_manifest)
     e = lambda {
-      a.parse!(%w[any --1287])
+      a.parse(%w[any --1287])
     }.must_raise(ExitStub)
     e.status.must_equal(2)
     e.message.must_match(/#{a.synopsis}/)
@@ -110,7 +110,7 @@ ArgParser Spec home page: https://github.com/sinm/argparser\n")
     b_manifest = a_manifest.merge(:help => 'User-defined help')
     a = ArgParser.new(b_manifest)
     e = lambda {
-      a.parse!(%w[--help])
+      a.parse(%w[--help])
     }.must_raise(ExitStub)
     e.status.must_equal(0)
     e.message.must_match(/#{b_manifest[:help]}/)
@@ -118,7 +118,7 @@ ArgParser Spec home page: https://github.com/sinm/argparser\n")
 
   it 'understands -- argument' do
     @args = ArgParser.new(a_manifest)
-    mode = @args.parse!(%w[-- --mode])['mode']
+    mode = @args.parse(%w[-- --mode])['mode']
     mode.count.must_equal(1)
     mode.value.first.must_equal(mode.default)
   end
@@ -130,19 +130,19 @@ describe 'Multiple argumented options w/default value' do
   end
 
   it 'reads them and gives out values in order' do
-    @args.parse!(%w[--mode second -m first -msecond -- -])
+    @args.parse(%w[--mode second -m first -msecond -- -])
     @args['mode'].value.must_equal(%w[second first second])
   end
 
   it 'doesn''t validate unknown value' do
     lambda {
-      @args.parse!(%w[--mode second -m foo -msecond -])
+      @args.parse(%w[--mode second -m foo -msecond -])
     }.must_raise(ExitStub).status.must_equal(2)
   end
 
   it 'doesn''t understand unknown options' do
     lambda {
-      @args.parse!(%w[--mode second -abm foo -m first -- -])
+      @args.parse(%w[--mode second -abm foo -m first -- -])
     }.must_raise(ExitStub).status.must_equal(2)
   end
 end
@@ -160,17 +160,17 @@ describe 'required option' do
   end
 
   it 'is really not optional' do
-    e = lambda { @args.parse!(%w[-- file]) }.must_raise(ExitStub)
+    e = lambda { @args.parse(%w[-- file]) }.must_raise(ExitStub)
     e.status.must_equal(2)
   end
 
   it 'is actually multiple too' do
-    @args.parse!(%w[-rrrrr --legacy-required --required -r -- file])
+    @args.parse(%w[-rrrrr --legacy-required --required -r -- file])
     @args['required'].count.must_equal(8)
   end
 
   it 'lives with an optional one' do
-    @args.parse!(%w[--mode first -rmsecond])
+    @args.parse(%w[--mode first -rmsecond])
     @args['required'].count.must_equal(1)
   end
 end
@@ -186,11 +186,11 @@ describe 'input argument' do
   end
 
   it 'terminates if name used as an option' do
-    lambda { @args.parse!(%w[--file2 --]) }.must_raise(ExitStub)
+    lambda { @args.parse(%w[--file2 --]) }.must_raise(ExitStub)
   end
 
   it 'survives second optional argument' do
-    @args.parse!(%w[file2])
+    @args.parse(%w[file2])
     @args['file'].value.must_equal('file2')
     @args['file2'].value.must_equal(@args['file2'].default)
   end
@@ -209,9 +209,9 @@ describe 'optional tiny features' do
   end
 
   it 'allows to get value as string' do
-    @args.parse!(%w[--aaaaa foo])
+    @args.parse(%w[--aaaaa foo])
     "#{@args['aaaaa']}".must_equal('foo')
-    @args.parse!(%w[--aaaaa foo -abar])
+    @args.parse(%w[--aaaaa foo -abar])
     "#{@args['aaaaa']}".must_equal('foo, bar')
   end
 end

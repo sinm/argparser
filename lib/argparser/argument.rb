@@ -3,6 +3,8 @@
 class ArgParser
   class Argument
     include Tools
+
+    # These attrs are from the manifest that is applied through constructor
     attr_reader   :name
     attr_reader   :help     # Help string
     attr_reader   :validate # Proc(this, parser) to validate a value
@@ -10,17 +12,19 @@ class ArgParser
     attr_reader   :required # Required
     attr_reader   :multiple # May occur multiple times?
 
-    attr_reader   :count    # Occucences after parsing was done
-    attr_accessor :value    # Value (Array if multiple) after parsing was done
+    # These attrs have their meaning after parsing was done
+    attr_reader   :count    # Occucences
+    attr_reader   :value    # Value (Array if multiple)
 
+    # Just helper
     def names
       [name]
     end
 
     # Constructs from Hash of properties (see attr_readers)
     def initialize(o_manifest)
-      hash2vars!(o_manifest)
-      reset!
+      hash2vars(o_manifest)
+      reset
       raise ManifestError, ERR_OPTION_NULL if !name or name.strip.empty?
     end
 
@@ -31,15 +35,16 @@ class ArgParser
       s
     end
 
-    # Sets value. Do not use this directly
-    def set_value(v)
+    # Adds value.
+    def add_value(v)
       @count += 1
-      multiple ? (@value << v).flatten! : @value = v if !v.nil?
+      multiple ? (@value = @value + Array(v)) : @value = v
+      self
     end
 
     # Does option contain it's value?
     def value?
-      multiple ? !value.empty? : !!value
+      @count > 0
     end
 
     # Returns value as string
@@ -47,13 +52,14 @@ class ArgParser
       multiple ? value.map(&:to_s).join(', ') : value.to_s
     end
 
-    def validate!(parser)
+    def valid?(parser)
       !validate || validate.call(self, parser)
     end
 
-    def reset!
+    def reset
       @value = multiple ? [] : nil
       @count = 0
+      self
     end
 
     def printed_help
@@ -63,9 +69,9 @@ class ArgParser
     end
 
     # Set value to default one if no value provided
-    def set_default!
-      return if !default || value?
-      set_value(get_default)
+    def set_default
+      return self if !default || value?
+      add_value(get_default)
     end
 
     # Get default value

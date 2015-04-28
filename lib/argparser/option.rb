@@ -2,13 +2,13 @@
 
 class ArgParser
   class Option < Argument
-    attr_reader :param  # Parameter name, if any
 
-    # Returns first name as a 'default' one
+    # These attrs are from the manifest that is applied through constructor
+    attr_reader :param  # Parameter name, if any
+    # Returns first name as a 'default' one when several names given
     def name
       @name ||= names.first
     end
-
     # Names of an option (short, long, etc.)
     def names
       @names ||= [@name]

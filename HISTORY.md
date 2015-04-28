@@ -1,3 +1,13 @@
+# 2.0.0.RC2
+2015-04-28 Holidays
+
+* All exclamation marks removed from method names
+* `Option/Argument#set_value` renamed to `#add_value`
+* `Option/Argument#add_value`, `set_default` and `#reset` now return `self`
+* `Option/Argument#value` now is read-only
+* `Option/Argument#value?` now returns true in case of parsed option w/o param
+* Block(name, value) in `#parse`
+
 # 2.0.0.RC1
 2015-04-28 Holidays
 

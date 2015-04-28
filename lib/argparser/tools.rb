@@ -4,7 +4,7 @@ class ArgParser
   # Aux tools intented to include into a class
   module Tools
     # Sets self state from a hash given
-    def hash2vars!(hash)
+    def hash2vars(hash)
       if hash.kind_of?(Hash) || (hash.respond_to?(:to_h) && (hash = hash.to_h))
         hash.each do |k, v|
           next unless self.respond_to?(k)
