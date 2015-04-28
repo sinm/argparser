@@ -6,7 +6,7 @@ Rake::TestTask.new :test do |t|
   t.libs.push 'spec'
 end
 
-task :build do
+task :build => :test do
   system('gem build argparser.gemspec')
 end
 
