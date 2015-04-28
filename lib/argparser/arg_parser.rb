@@ -48,6 +48,7 @@ class ArgParser
     def manifest=(manifest)
       @@manifest = manifest
     end
+
     def manifest
       @@manifest ||= {}
     end
@@ -71,7 +72,7 @@ class ArgParser
   end
 
   def initialize(manifest)
-    hash2vars(manifest = ArgParser.manifest.merge(manifest))
+    hash2vars(ArgParser.manifest.merge(manifest))
     @arguments =
       (@arguments || []).map {|o| o.kind_of?(Argument) ? o : Argument.new(o)}
     @options =
@@ -86,9 +87,8 @@ class ArgParser
     _check_manifest
 
     OPTS_RESERVED.each do |res|
-      name = res[:name]
-      next unless argv.include?("--#{name}") && !get_argument(name)
-      terminate(0, self.send(res[:func]))
+      next if !argv.include?("--#{res[:name]}") || self[res[:name]]
+      terminate(0, send(res[:func]))
     end
 
     args = argv.dup

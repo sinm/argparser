@@ -83,7 +83,6 @@ A Example
 OPTIONS:
 [-m, --mode first|second|third]...
 \tExample mode.
-\tDefaults to: first
 [--help]
 \tPrint this help and exit.
 [--version]
@@ -91,7 +90,6 @@ OPTIONS:
 ARGUMENTS:
 [file]
 \tFilename or - for stdin.
-\tDefaults to: -
 Report bugs to: https://github.com/sinm/argparser
 ArgParser Spec home page: https://github.com/sinm/argparser\n")
 

@@ -1,4 +1,4 @@
-# 2.0.0.RC2
+# 2.0.0
 2015-04-28 Holidays
 
 * All exclamation marks removed from method names
@@ -7,10 +7,6 @@
 * `Option/Argument#value` now is read-only
 * `Option/Argument#value?` now returns true in case of parsed option w/o param
 * Block(name, value) in `#parse`
-
-# 2.0.0.RC1
-2015-04-28 Holidays
-
 * Major version changed due to extensive renamings and removals
 * Whitespace in option names no longer stripped
 * Separate classes for options and arguments

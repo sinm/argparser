@@ -5,16 +5,16 @@ class ArgParser
     include Tools
 
     # These attrs are from the manifest that is applied through constructor
-    attr_reader   :name
-    attr_reader   :help     # Help string
-    attr_reader   :validate # Proc(this, parser) to validate a value
-    attr_reader   :default  # Value or proc to set default value
-    attr_reader   :required # Required
-    attr_reader   :multiple # May occur multiple times?
+    attr_reader :name
+    attr_reader :help     # Help string
+    attr_reader :validate # Proc(this, parser) to validate a value
+    attr_reader :default  # Default value
+    attr_reader :required # Required
+    attr_reader :multiple # May occur multiple times?
 
     # These attrs have their meaning after parsing was done
-    attr_reader   :count    # Occucences
-    attr_reader   :value    # Value (Array if multiple)
+    attr_reader :count    # Occucences
+    attr_reader :value    # Value (Array if multiple)
 
     # Just helper
     def names
@@ -25,7 +25,7 @@ class ArgParser
     def initialize(o_manifest)
       hash2vars(o_manifest)
       reset
-      raise ManifestError, ERR_OPTION_NULL if !name or name.strip.empty?
+      raise ManifestError, ERR_OPTION_NULL if !name || name.strip.empty?
     end
 
     def synopsis
@@ -63,20 +63,12 @@ class ArgParser
     end
 
     def printed_help
-      s = help || ''
-      s << "\n\tDefaults to: #{get_default}" if default
-      "%s\n\t%s" % [synopsis, s]
+      "%s\n\t%s" % [synopsis, (help || '')]
     end
 
     # Set value to default one if no value provided
     def set_default
-      return self if !default || value?
-      add_value(get_default)
-    end
-
-    # Get default value
-    def get_default
-      default.respond_to?(:call) ? default.call : default
+      (!default || value?) ? self : add_value(default)
     end
   end
 end
