@@ -6,4 +6,4 @@ gem 'codeclimate-test-reporter',  :group      => :development,
 
 gem 'rubocop', '~> 0.30',         :group      => :development,
                                   :require    => nil,
-                                  :platforms  => [:ruby_20, :ruby_21, :ruby_22]
+                                  :platforms  => [:ruby_20, :ruby_21]
