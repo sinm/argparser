@@ -1,3 +1,8 @@
+# 2.0.1
+2015-04-28
+
+* moved rubocop to Gemfile, it prevents build on MRI 1.8
+
 # 2.0.0
 2015-04-28 Holidays
 
