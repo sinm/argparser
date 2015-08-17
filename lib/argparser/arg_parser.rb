@@ -73,10 +73,23 @@ class ArgParser
 
   def initialize(manifest)
     hash2vars(ArgParser.manifest.merge(manifest))
-    @arguments =
-      (@arguments || []).map {|o| o.kind_of?(Argument) ? o : Argument.new(o)}
-    @options =
-      (@options || []).map   {|o| o.kind_of?(Option)   ? o : Option.new(o)}
+    @arguments ||= []
+    @options ||= []
+    @options = @options.map do |o|
+      if o.kind_of?(Option)
+        o
+      else
+        if o.delete('input') || o.delete(:input)
+          @arguments.unshift(o)
+        else
+          if (arg = (o.delete('argument') || o.delete(:argument)))
+            o[:param] = arg
+          end
+          Option.new(o)
+        end
+      end
+    end.compact
+    @arguments = @arguments.map {|o| o.kind_of?(Argument) ? o : Argument.new(o)}
     _check_manifest
   end
 
@@ -120,6 +133,8 @@ class ArgParser
 
     self
   end
+
+  alias parse! parse
 
   def terminate(code, str)
     s = StringIO.new

@@ -47,6 +47,11 @@ class ArgParser
       @count > 0
     end
 
+    def value=(new_value)
+      reset
+      Array(new_value).each {|nv| add_value(nv)}
+    end
+
     # Returns value as string
     def to_s
       multiple ? value.map(&:to_s).join(', ') : value.to_s
