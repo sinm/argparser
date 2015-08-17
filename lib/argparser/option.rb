@@ -8,6 +8,9 @@ class ArgParser
     def name
       @name ||= names.first
     end
+
+    alias argument param
+
     # Names of an option (short, long, etc.)
     def names
       @names ||= [@name]

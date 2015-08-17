@@ -79,12 +79,12 @@ class ArgParser
       if o.kind_of?(Option)
         o
       else
-        if o.delete('input') || o.delete(:input)
-          @arguments.unshift(o)
+        if o['input'] || o[:input]
+          o[:name] ||= o['names'] || o[:names]
+          @arguments << o
+          nil
         else
-          if (arg = (o.delete('argument') || o.delete(:argument)))
-            o[:param] = arg
-          end
+          o[:param] ||= (o['argument'] || o[:argument])
           Option.new(o)
         end
       end
@@ -214,14 +214,14 @@ class ArgParser
   def _set_long_option(a, tail)
     terminate(2, TRM_UNKNOWN % a) unless a.size > 1 && (o = get_option(a))
     terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % a) if o.param && tail.empty?
-    o.add_value(o.param ? tail.shift : nil)
+    o.add_value(o.param ? tail.shift : true)
   end
 
   def _set_short_options(a, tail)
     a.chars.each_with_index do |char, index|
       terminate(2, TRM_UNKNOWN % char) unless (option = get_option(char))
       if !option.param
-        option.add_value(nil)
+        option.add_value(true)
       elsif a.size-1 == index
         terminate(2, TRM_OPTION_ARGUMENT_EXPECTED % char) if tail.empty?
         option.add_value(tail.shift)
