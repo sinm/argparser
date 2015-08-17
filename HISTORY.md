@@ -1,3 +1,8 @@
+# 2.1.1
+2015-08-17 Compatible
+
+* makes gem backward compatible with 1.0
+
 # 2.0.1
 2015-04-28
 
